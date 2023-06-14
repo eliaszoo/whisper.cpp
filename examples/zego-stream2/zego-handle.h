@@ -46,11 +46,16 @@ class Player : public std::enable_shared_from_this<Player>,
           printf("[*] RTC Engine created!\n");
       }
 
-      ZegoCustomAudioProcessConfig audio_config;
-      audio_config.sampleRate = ZegoAudioSampleRate::ZEGO_AUDIO_SAMPLE_RATE_16K;
-      audio_config.channel = ZegoAudioChannel::ZEGO_AUDIO_CHANNEL_UNKNOWN;
-      audio_config.samples = 0;
-      engine->enableCustomAudioRemoteProcessing(true, &audio_config);
+      //ZegoCustomAudioProcessConfig audio_config;
+      //audio_config.sampleRate = ZegoAudioSampleRate::ZEGO_AUDIO_SAMPLE_RATE_16K;
+      //audio_config.channel = ZegoAudioChannel::ZEGO_AUDIO_CHANNEL_UNKNOWN;
+      //audio_config.samples = 0;
+      //engine->enableCustomAudioRemoteProcessing(true, &audio_config);
+
+      zego_audio_frame_param frame_param;
+      frame_param.channel = ZEGO_AUDIO_CHANNEL_MONO;  
+      frame_param.sample_rate = ZEGO_AUDIO_SAMPLE_RATE_16K;
+      engine->startAudioDataObserver(0b1000, frame_param);
 
       ZegoRoomConfig room_config;
       room_config.isUserStatusNotify = true;
@@ -114,6 +119,15 @@ class Player : public std::enable_shared_from_this<Player>,
                 engine->startPlayingStream(stream.streamID);
             }
         }
+
+    }
+
+    virtual void onPlayerAudioData(const unsigned char * data, unsigned int dataLength,
+                                   ZegoAudioFrameParam param,
+                                   const std::string & streamID) {
+
+        printf("onPlayerAudioData, streamId:%s, dataLength:%d, param:%p\n", streamID.c_str(), dataLength, &param);  
+        trans(data, dataLength);
     }
 
   private:
