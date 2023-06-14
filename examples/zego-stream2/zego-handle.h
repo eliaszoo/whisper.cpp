@@ -52,9 +52,9 @@ class Player : public std::enable_shared_from_this<Player>,
       //audio_config.samples = 0;
       //engine->enableCustomAudioRemoteProcessing(true, &audio_config);
 
-      zego_audio_frame_param frame_param;
-      frame_param.channel = ZEGO_AUDIO_CHANNEL_MONO;  
-      frame_param.sample_rate = ZEGO_AUDIO_SAMPLE_RATE_16K;
+      ZegoAudioFrameParam frame_param;
+      frame_param.sampleRate = ZegoAudioSampleRate::ZEGO_AUDIO_SAMPLE_RATE_16K;
+      frame_param.channel = ZegoAudioChannel::ZEGO_AUDIO_CHANNEL_UNKNOWN;
       engine->startAudioDataObserver(0b1000, frame_param);
 
       ZegoRoomConfig room_config;
