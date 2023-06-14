@@ -80,7 +80,7 @@ std::string to_timestamp(int64_t t) {
     return std::string(buf);
 }
 
-void trans(unsigned char * audio_data, int data_len) {
+void trans(const unsigned char * audio_data, int data_len) {
     if (data_len > 2*n_samples_step) {
         fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n", __func__);
         return;
