@@ -9,6 +9,7 @@
 #include <thread>
 #include <vector>
 #include <fstream>
+#include <cstring>
 
 struct Options {
     std::string example;    // 示例专题名称

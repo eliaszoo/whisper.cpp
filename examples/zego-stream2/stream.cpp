@@ -14,6 +14,7 @@
 #include <thread>
 #include <vector>
 #include <fstream>
+#include <csignal>
 
 bool is_running = true;
 
