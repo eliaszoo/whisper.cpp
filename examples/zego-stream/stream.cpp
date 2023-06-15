@@ -222,7 +222,7 @@ struct AudioFileInfo
 std::vector<AudioFileInfo> audioFileInfos; //测试存储pcm文件
 void OnPerAudioData(const char * room_id, const char * stream_id, unsigned char * audio_data, int data_len, int sample_rate, int channels, unsigned long long timestamp, void * user_data)
 {
-    trans(audio_data, data_len)
+    trans(audio_data, data_len);
 
     /*printf("OnPerAudioData, room id = %s, streamid = %s, len = %d, sample_rate = %d, timstamp = %lld, user data = %s \n", room_id, stream_id, data_len, sample_rate, timestamp, (char*)user_data);
 #if 0
