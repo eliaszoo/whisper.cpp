@@ -82,18 +82,10 @@ std::string to_timestamp(int64_t t) {
     return std::string(buf);
 }
 
-void trans(unsigned char * audio_data, int data_len) {
-    printf("data len: %d, step:%d\n", (int) data_len, n_samples_step);
-    if (data_len > 2*n_samples_step) {
-        fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n", __func__);
-        return;
-    }
-
-    float* floatArr = (float*) audio_data;
-    std::vector<float> floatVec(floatArr, floatArr + data_len / sizeof(float));
+void trans(std::vector<float>& floatVec) {
     pcmf32_new.insert(pcmf32_new.end(), floatVec.begin(), floatVec.end());
 
-    printf("pcm size: %d, step:%d\n", (int) pcmf32_new.size(), n_samples_step);
+    //printf("pcm size: %d, step:%d\n", (int) pcmf32_new.size(), n_samples_step);
     if (pcmf32_new.size() < n_samples_step) {
         return;
     }
@@ -205,6 +197,18 @@ void trans(unsigned char * audio_data, int data_len) {
         }
         fflush(stdout);
     }
+}
+
+void trans(unsigned char * audio_data, int data_len) {
+    //printf("data len: %d, step:%d\n", (int) data_len, n_samples_step);
+    if (data_len > 2*n_samples_step) {
+        fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n", __func__);
+        return;
+    }
+
+    float* floatArr = (float*) audio_data;
+    std::vector<float> floatVec(floatArr, floatArr + data_len / sizeof(float));
+    trans(floatVec);
 }
 
 
@@ -495,6 +499,18 @@ int main(int argc, char ** argv) {
 
     auto t_last  = std::chrono::high_resolution_clock::now();
     const auto t_start = t_last;
+
+
+    std::vector<float> tpcmf32;               // mono-channel F32 PCM
+    std::vector<std::vector<float>> tpcmf32s; // stereo-channel F32 PCM
+
+    if (!::read_wav("./samples/jfk.wav", tpcmf32, tpcmf32s, false)) {
+        fprintf(stderr, "error: failed to read WAV file");
+        return -1;
+    }
+
+    trans(tpcmf32);
+    pcmf32_new.clear();
 
     // main loop
     while (is_running) {
