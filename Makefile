@@ -279,8 +279,8 @@ quantize: examples/quantize/quantize.cpp ggml.o $(WHISPER_OBJ) $(SRC_COMMON)
 stream: examples/stream/stream.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) ggml.o $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) examples/stream/stream.cpp $(SRC_COMMON) $(SRC_COMMON_SDL) ggml.o $(WHISPER_OBJ) -o stream $(CC_SDL) $(LDFLAGS)
 
-zego-stream: examples/zego-stream/stream.cpp -fuse-ld=gold $(SRC_COMMON) ggml.o $(WHISPER_OBJ)
-	$(CXX) $(CXXFLAGS) -I./examples/zego-stream/include -lZegoExpressEngine -lZegoAudioRecord -lzegoliveroom -L./examples/zego-stream/ examples/zego-stream/stream.cpp $(SRC_COMMON) ggml.o $(WHISPER_OBJ) -o zego-stream $(LDFLAGS)
+zego-stream: examples/zego-stream/stream.cpp $(SRC_COMMON) ggml.o $(WHISPER_OBJ)
+	$(CXX) $(CXXFLAGS) -I./examples/zego-stream/include -lZegoAudioRecord -lzegoliveroom -lrt -L./examples/zego-stream/ examples/zego-stream/stream.cpp $(SRC_COMMON) ggml.o $(WHISPER_OBJ) -o zego-stream $(LDFLAGS)
 
 zego-stream2: examples/zego-stream2/stream.cpp $(SRC_COMMON) ggml.o $(WHISPER_OBJ)
 	$(CXX) $(CXXFLAGS) -I./examples/zego-stream2/include -lZegoExpressEngine -L./examples/zego-stream2 examples/zego-stream2/stream.cpp $(SRC_COMMON) ggml.o $(WHISPER_OBJ) -o zego-stream2 $(LDFLAGS)

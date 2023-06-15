@@ -13,8 +13,9 @@
 #include <thread>
 #include <vector>
 #include <fstream>
+#include <cstring>
 
-static std::string token_ = "A+5OMOmk2jzRZOZS0TfS5Xxks+1Oytqp2ySKnKsoru1U0HXN/UuG9wMj0N/ljDZDgD+3oi1nHRv+JUMaytDuqPPR1JVtboWcXBa77+Q3TJbdodbZ0kDr+UV6uJP1OslbJ+iMobZ+29nH2xNIQbI97GhuyG2SJnlz1Xkx6O3Typ1Av92CUL439/iNOZBqBIiq9F0n4CUMQRmUH6Rt8nbAGa0Ex3b6N8Blt9uRBCNUDpYIgebLLrl1QGUoCQ0Vgn7WrXvoNRND3/jFdsalByRj3AQtmA1E7W70rGD4bl/ngJfwBo9zezsLNDxlSnWscOTndBkzvm2aEUIEs/KIsYNKj289AkyP8A02q/f4FPsjDgTF6w9XVAbSH1sbzlLTEeyHXh23GgFdJQSGtVo6h3OgDmyvLI9K+ZWHcEdx701sjxyMRnauOfDSAouIBKOgBpTA";                         // 用于测试的 token
+static std::string token_ = "sEub2VayRtw0TXbDS7Ev/WLmC9hx8ay+R62Fiak/I6jHPrJaQs4kv7U5RQVXtZ+VgecNELHvUrH6q+uVF4TV3k8FvTTQgBVar6dXnHWr+pLitO1WLqbQ9f38XgS0Q2MuHLI/+azd8FDkZTPg/Yf3C+rtK4wk5+rujCyM203iowUKqT7Oe/HURcT369NqOvJ3QkmB+vk/Z3gw/9ACfXU0JtcR+Ssehp6K5Y3tp8an+LMIx1ENcF6s5xG9+6KpNS3ectGKr1H1BC4Vi8hJaFiclkG/W4JhXvlB+LAW0WU3w4WjXqmfqV8AFpDuA+J4/sd3+tY1G+DS90BVqbHv8uh2aJlUXxECDDfexSAsNBoRB+Ug2/lxfIW1BfRG58tWV+HL/8H6mBBRNG3A3jYNYJiydk9KwfaYyV0hmoqdjULKv6iGHMiwC/5TVSvKNwqplDM+ep20hEg8MahJjntp/pSAd7OfnPvkkm1VK0XsrtsA9NbboWIMrR50gpP5meqIv9I4";                         // 用于测试的 token
 static int g_play_mode_ = -1;                           // 测试拉流模式，不用修改
 static std::string g_user_id_ = "user_1";               // 用户id，必须全局唯一
 static std::string g_room_id_ = "room_1";               // 房间id，适用于以房间为单位拉流场景
@@ -221,7 +222,9 @@ struct AudioFileInfo
 std::vector<AudioFileInfo> audioFileInfos; //测试存储pcm文件
 void OnPerAudioData(const char * room_id, const char * stream_id, unsigned char * audio_data, int data_len, int sample_rate, int channels, unsigned long long timestamp, void * user_data)
 {
-    printf("OnPerAudioData, room id = %s, streamid = %s, len = %d, sample_rate = %d, timstamp = %lld, user data = %s \n", room_id, stream_id, data_len, sample_rate, timestamp, (char*)user_data);
+    trans(audio_data, data_len)
+
+    /*printf("OnPerAudioData, room id = %s, streamid = %s, len = %d, sample_rate = %d, timstamp = %lld, user data = %s \n", room_id, stream_id, data_len, sample_rate, timestamp, (char*)user_data);
 #if 0
     bool is_new_add = true;
     for(int i = 0; i < audioFileInfos.size(); i++){
@@ -242,7 +245,7 @@ void OnPerAudioData(const char * room_id, const char * stream_id, unsigned char 
         audioFileInfos.push_back(info);
     }
     
-#endif 
+#endif */
 }
 
 void OnVideoData(const char * stream_id, unsigned char * video_data, int data_len, int width, int height, void * user_data)
