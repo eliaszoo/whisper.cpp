@@ -310,7 +310,7 @@ void OnLogin(int error_code, void * user_data)
 
 void OnRemoteVideoRenderData(const char *room_id, const char * stream_id, unsigned char** data, unsigned int* data_length, struct zego_video_frame_param param, void * user_context)
 {
-    printf("OnRemoteVideoRenderData, room_id = %s, stream_id = %s, format:%d, width:%d, height:%d, timestamp:%lld\n", room_id, stream_id, param.format, param.width, param.height, param.timestamp);
+    //printf("OnRemoteVideoRenderData, room_id = %s, stream_id = %s, format:%d, width:%d, height:%d, timestamp:%lld\n", room_id, stream_id, param.format, param.width, param.height, param.timestamp);
 }
 
 void whisper_print_usage(int argc, char ** argv, const whisper_params & params);
