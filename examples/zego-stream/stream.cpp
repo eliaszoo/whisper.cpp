@@ -83,6 +83,7 @@ std::string to_timestamp(int64_t t) {
 }
 
 void trans(unsigned char * audio_data, int data_len) {
+    printf("data len: %d, step:%d\n", (int) data_len, n_samples_step);
     if (data_len > 2*n_samples_step) {
         fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n", __func__);
         return;
@@ -92,6 +93,7 @@ void trans(unsigned char * audio_data, int data_len) {
     std::vector<float> floatVec(floatArr, floatArr + data_len / sizeof(float));
     pcmf32_new.assign(floatVec.begin(), floatVec.end());
 
+    printf("pcm size: %d, step:%d\n", (int) pcmf32_new.size(), n_samples_step);
     if (pcmf32_new.size() < n_samples_step) {
         return;
     }
