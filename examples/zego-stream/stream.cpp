@@ -95,7 +95,7 @@ void trans(std::vector<float>& floatVec) {
     // take up to params.length_ms audio from previous iteration
     const int n_samples_take = std::min((int) pcmf32_old.size(), std::max(0, n_samples_keep + n_samples_len - n_samples_new));
 
-    //printf("processing: take = %d, new = %d, old = %d\n", n_samples_take, n_samples_new, (int) pcmf32_old.size());
+    printf("processing: take = %d, new = %d, old = %d, keep = %d, len = %d\n", n_samples_take, n_samples_new, (int) pcmf32_old.size(), n_samples_keep, n_samples_len);
 
     pcmf32.resize(n_samples_new + n_samples_take);
 
@@ -147,6 +147,7 @@ void trans(std::vector<float>& floatVec) {
             printf("\33[2K\r");
 
             const int n_segments = whisper_full_n_segments(ctx);
+            printf("once done segment: %d\n", n_segments);
             for (int i = 0; i < n_segments; ++i) {
                 const char * text = whisper_full_get_segment_text(ctx, i);
 
@@ -433,7 +434,7 @@ int main(int argc, char ** argv) {
     zego_room_player_config playerConfig;
     strncpy(playerConfig.room_id, g_room_id_.c_str(), ZEGO_EXPRESS_MAX_ROOMID_LEN);
     strncpy(playerConfig.user_id, g_user_id_.c_str(), ZEGO_EXPRESS_MAX_USERID_LEN);
-    playerConfig.play_stream_type = zego_play_stream_type::PLAY_STREAM_TYPE_BOTH;
+    playerConfig.play_stream_type = zego_play_stream_type::PLAY_STREAM_TYPE_AUDIO;
     playerConfig.is_auto_mix_audio_stream = false;
     zego_api_init_get_data_by_room_id(playerConfig);
 
@@ -501,7 +502,7 @@ int main(int argc, char ** argv) {
     const auto t_start = t_last;
 
 
-    std::vector<float> tpcmf32;               // mono-channel F32 PCM
+    /*std::vector<float> tpcmf32;               // mono-channel F32 PCM
     std::vector<std::vector<float>> tpcmf32s; // stereo-channel F32 PCM
 
     if (!::read_wav("./samples/jfk.wav", tpcmf32, tpcmf32s, false)) {
@@ -510,7 +511,7 @@ int main(int argc, char ** argv) {
     }
 
     trans(tpcmf32);
-    pcmf32_new.clear();
+    pcmf32_new.clear();*/
 
     // main loop
     while (is_running) {
