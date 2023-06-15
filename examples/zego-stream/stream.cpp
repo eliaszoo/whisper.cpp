@@ -91,7 +91,7 @@ void trans(unsigned char * audio_data, int data_len) {
 
     float* floatArr = (float*) audio_data;
     std::vector<float> floatVec(floatArr, floatArr + data_len / sizeof(float));
-    pcmf32_new.assign(floatVec.begin(), floatVec.end());
+    pcmf32_new.insert(pcmf32_new.end(), floatVec.begin(), floatVec.end());
 
     printf("pcm size: %d, step:%d\n", (int) pcmf32_new.size(), n_samples_step);
     if (pcmf32_new.size() < n_samples_step) {
