@@ -67,6 +67,7 @@ std::vector<whisper_token> prompt_tokens;
 struct whisper_context * ctx;
 struct whisper_params params;
 std::ofstream fout;
+int count = 0;
 
 //  500 -> 00:05.000
 // 6000 -> 01:00.000
@@ -105,8 +106,17 @@ void trans(std::vector<float>& floatVec) {
 
     memcpy(pcmf32.data() + n_samples_take, pcmf32_new.data(), n_samples_new*sizeof(float));
 
+    printf("processing: pcm size = %d, old = %d\n",(int) pcmf32.size(), (int) pcmf32_old.size());
+
     pcmf32_old = pcmf32;
     pcmf32_new.clear();
+
+    char* filename;
+    sprintf(filename, "test%d.pcm", count++);
+    FILE* p = fopen(filename, "wb+");
+    fwrite(pcmf32.data(), sizeof(float), pcmf32.size(), p);
+    fflush(p);
+    fclose(p);
 
     // run the inference
     {
@@ -227,9 +237,10 @@ struct AudioFileInfo
 };
 
 std::vector<AudioFileInfo> audioFileInfos; //测试存储pcm文件
-FILE* pcm;
+FILE* pcm = 0;
 void OnPerAudioData(const char * room_id, const char * stream_id, unsigned char * audio_data, int data_len, int sample_rate, int channels, unsigned long long timestamp, void * user_data)
 {
+    printf("OnPerAudioData, room id = %s, streamid = %s, len = %d, sample_rate = %d, timstamp = %lld, channel = %d, user data = %s \n", room_id, stream_id, data_len, sample_rate, timestamp, channels, (char*)user_data);
     if (pcm == nullptr) {
         pcm = fopen("test.wav", "wb+");
     } else {
@@ -422,7 +433,7 @@ int main(int argc, char ** argv) {
     zego_api_set_connection_state_update_callback(OnConnectionUpdate, nullptr);
 
     // 开启拉流vad检测,拉流检测到静音数据时不会在通过OnAudioData回调出来
-    zego_api_enable_vad(true); 
+    zego_api_enable_vad(false); 
 
     // 设置 SDK 参数
     zego_sdk_config config;
