@@ -83,6 +83,40 @@ std::string to_timestamp(int64_t t) {
     return std::string(buf);
 }
 
+std::vector<float> audio;
+int audio_pos = 0;
+int audio_len = 0;
+std::mutex       m_mutex;
+
+void get(int ms, std::vector<float>& result) {
+    result.clear();
+
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        size_t n_samples = (16000 * ms) / 1000;
+        if (n_samples > audio_len) {
+            n_samples = audio_len;
+        }
+
+        result.resize(n_samples);
+
+        int s0 = audio_pos - n_samples;
+        if (s0 < 0) {
+            s0 += audio.size();
+        }
+
+        if (s0 + n_samples > audio.size()) {
+            const size_t n0 = audio.size() - s0;
+
+            memcpy(result.data(), &audio[s0], n0 * sizeof(float));
+            memcpy(&result[n0], &audio[0], (n_samples - n0) * sizeof(float));
+        } else {
+            memcpy(result.data(), &audio[s0], n_samples * sizeof(float));
+        }
+    }
+}
+
 void trans(std::vector<float>& floatVec) {
     pcmf32_new.insert(pcmf32_new.end(), floatVec.begin(), floatVec.end());
 
@@ -96,7 +130,7 @@ void trans(std::vector<float>& floatVec) {
     // take up to params.length_ms audio from previous iteration
     const int n_samples_take = std::min((int) pcmf32_old.size(), std::max(0, n_samples_keep + n_samples_len - n_samples_new));
 
-    printf("processing: take = %d, new = %d, old = %d, keep = %d, len = %d\n", n_samples_take, n_samples_new, (int) pcmf32_old.size(), n_samples_keep, n_samples_len);
+    //printf("processing: take = %d, new = %d, old = %d, keep = %d, len = %d\n", n_samples_take, n_samples_new, (int) pcmf32_old.size(), n_samples_keep, n_samples_len);
 
     pcmf32.resize(n_samples_new + n_samples_take);
 
@@ -106,17 +140,17 @@ void trans(std::vector<float>& floatVec) {
 
     memcpy(pcmf32.data() + n_samples_take, pcmf32_new.data(), n_samples_new*sizeof(float));
 
-    printf("processing: pcm size = %d, old = %d\n",(int) pcmf32.size(), (int) pcmf32_old.size());
+    //printf("processing: pcm size = %d, old = %d\n",(int) pcmf32.size(), (int) pcmf32_old.size());
 
     pcmf32_old = pcmf32;
     pcmf32_new.clear();
 
-    char filename[32];
+    /*char filename[32];
     sprintf(filename, "test%d.pcm", count++);
     FILE* p = fopen(filename, "wb+");
     fwrite(pcmf32.data(), sizeof(float), pcmf32.size(), p);
     fflush(p);
-    fclose(p);
+    fclose(p);*/
 
     // run the inference
     {
@@ -211,6 +245,36 @@ void trans(std::vector<float>& floatVec) {
     }
 }
 
+void transInOtherThread() {
+    while (true)
+    {
+        std::vector<float> floatVec;
+        while (true) {
+            get(params.step_ms, floatVec);
+
+            if ((int) pcmf32_new.size() > 2*n_samples_step) {
+                fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n", __func__);
+                continue;
+            }
+
+            if ((int) pcmf32_new.size() >= n_samples_step) {
+                {
+                    std::lock_guard<std::mutex> lock(m_mutex);
+
+                    audio_pos = 0;
+                    audio_len = 0;
+                }
+                break;
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        trans(floatVec);
+    }
+    
+}
+
 void trans(unsigned char * audio_data, int data_len) {
     //printf("data len: %d, step:%d\n", (int) data_len, n_samples_step);
     if (data_len > 2*n_samples_step) {
@@ -218,15 +282,36 @@ void trans(unsigned char * audio_data, int data_len) {
         return;
     }
 
-    std::vector<int16_t> intArr(data_len/sizeof(int16_t));
+    int n_samples = data_len/sizeof(int16_t);
+    std::vector<int16_t> intArr(n_samples);
     memcpy(intArr.data(), audio_data, data_len);
 
-    std::vector<float> floatArr(intArr.size());
-    for (uint64_t i = 0; i < intArr.size(); i++) {
+    std::vector<float> floatArr(n_samples);
+    for (uint64_t i = 0; i < n_samples; i++) {
         floatArr[i] = float(intArr[i])/32768.0f;
     }
 
-    trans(floatArr);
+    //trans(floatArr);
+
+
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        if (audio_pos + n_samples > audio.size()) {
+            const size_t n0 = audio.size() - audio_pos;
+
+            memcpy(&audio[audio_pos], floatArr.data(), n0 * sizeof(float));
+            memcpy(&audio[0], &floatArr[n0], (n_samples - n0) * sizeof(float));
+
+            audio_pos = (audio_pos + n_samples) % audio.size();
+            audio_len = audio.size();
+        } else {
+            memcpy(&audio[audio_pos], floatArr.data(), n_samples * sizeof(float));
+
+            audio_pos = (audio_pos + n_samples) % audio.size();
+            audio_len = std::min(size_t(audio_len + n_samples), audio.size());
+        }
+    }
 }
 
 
@@ -248,11 +333,11 @@ FILE* pcm = 0;
 void OnPerAudioData(const char * room_id, const char * stream_id, unsigned char * audio_data, int data_len, int sample_rate, int channels, unsigned long long timestamp, void * user_data)
 {
     //printf("OnPerAudioData, room id = %s, streamid = %s, len = %d, sample_rate = %d, timstamp = %lld, channel = %d, user data = %s \n", room_id, stream_id, data_len, sample_rate, timestamp, channels, (char*)user_data);
-    if (pcm == nullptr) {
+    /*if (pcm == nullptr) {
         pcm = fopen("test.wav", "wb+");
     } else {
         fwrite(audio_data, 1, data_len, pcm);
-    }
+    }*/
 
     trans(audio_data, data_len);
 
@@ -469,6 +554,8 @@ int main(int argc, char ** argv) {
 
     zego_api_login_by_token(token_.c_str(), nullptr, OnLogin);
 
+    audio.resize((16000*params.length_ms)/1000);
+    std::thread threadTrans(transInOtherThread);
 
     // whisper init
 
@@ -543,6 +630,7 @@ int main(int argc, char ** argv) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
+    threadTrans.join();
     whisper_print_timings(ctx);
     whisper_free(ctx);
 
