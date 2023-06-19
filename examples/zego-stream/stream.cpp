@@ -131,6 +131,7 @@ void trans(std::vector<float>& floatVec) {
         wparams.max_tokens       = params.max_tokens;
         wparams.language         = params.language.c_str();
         wparams.n_threads        = params.n_threads;
+        wparams.suppress_blank   = false;
 
         wparams.audio_ctx        = params.audio_ctx;
         wparams.speed_up         = params.speed_up;
@@ -217,10 +218,13 @@ void trans(unsigned char * audio_data, int data_len) {
         return;
     }
 
-    const size_t n_samples = data_len / sizeof(float);
+    std::vector<int16_t> intArr(data_len/sizeof(int16_t));
+    memcpy(intArr.data(), audio_data, data_len);
 
-    std::vector<float> floatArr(n_samples);
-    memcpy(floatArr.data(), audio_data, n_samples*sizeof(float));
+    std::vector<float> floatArr(intArr.size());
+    for (uint64_t i = 0; i < intArr.size(); i++) {
+        floatArr[i] = float(intArr[i])/32768.0f;
+    }
 
     trans(floatArr);
 }
