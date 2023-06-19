@@ -222,7 +222,7 @@ void trans(unsigned char * audio_data, int data_len) {
     std::vector<float> floatArr(n_samples);
     memcpy(floatArr.data(), audio_data, n_samples*sizeof(float));
 
-    trans(floatVec);
+    trans(floatArr);
 }
 
 
@@ -243,7 +243,7 @@ std::vector<AudioFileInfo> audioFileInfos; //测试存储pcm文件
 FILE* pcm = 0;
 void OnPerAudioData(const char * room_id, const char * stream_id, unsigned char * audio_data, int data_len, int sample_rate, int channels, unsigned long long timestamp, void * user_data)
 {
-    printf("OnPerAudioData, room id = %s, streamid = %s, len = %d, sample_rate = %d, timstamp = %lld, channel = %d, user data = %s \n", room_id, stream_id, data_len, sample_rate, timestamp, channels, (char*)user_data);
+    //printf("OnPerAudioData, room id = %s, streamid = %s, len = %d, sample_rate = %d, timstamp = %lld, channel = %d, user data = %s \n", room_id, stream_id, data_len, sample_rate, timestamp, channels, (char*)user_data);
     if (pcm == nullptr) {
         pcm = fopen("test.wav", "wb+");
     } else {

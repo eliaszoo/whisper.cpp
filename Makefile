@@ -33,7 +33,7 @@ endif
 #
 
 CFLAGS   = -I.              -O3 -DNDEBUG -std=c11   -fPIC
-CXXFLAGS = -I. -I./examples -O3 -DNDEBUG -std=c++11 -fPIC
+CXXFLAGS = -I. -I./examples -g -std=c++11 -fPIC
 LDFLAGS  =
 
 # ref: https://github.com/ggerganov/whisper.cpp/issues/37
