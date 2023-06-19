@@ -111,7 +111,7 @@ void trans(std::vector<float>& floatVec) {
     pcmf32_old = pcmf32;
     pcmf32_new.clear();
 
-    char* filename;
+    char filename[32];
     sprintf(filename, "test%d.pcm", count++);
     FILE* p = fopen(filename, "wb+");
     fwrite(pcmf32.data(), sizeof(float), pcmf32.size(), p);
@@ -217,8 +217,11 @@ void trans(unsigned char * audio_data, int data_len) {
         return;
     }
 
-    float* floatArr = (float*) audio_data;
-    std::vector<float> floatVec(floatArr, floatArr + data_len / sizeof(float));
+    const size_t n_samples = data_len / sizeof(float);
+
+    std::vector<float> floatArr(n_samples);
+    memcpy(floatArr.data(), audio_data, n_samples*sizeof(float));
+
     trans(floatVec);
 }
 

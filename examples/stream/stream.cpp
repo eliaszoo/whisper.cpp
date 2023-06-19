@@ -336,7 +336,7 @@ int main(int argc, char ** argv) {
                     const char * text = whisper_full_get_segment_text(ctx, i);
 
                     if (params.no_timestamps) {
-                        printf("%s", text);
+                        printf("%s-------------\n", text);
                         fflush(stdout);
 
                         if (params.fname_out.length() > 0) {
