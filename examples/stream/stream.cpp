@@ -248,7 +248,7 @@ int main(int argc, char ** argv) {
             // take up to params.length_ms audio from previous iteration
             const int n_samples_take = std::min((int) pcmf32_old.size(), std::max(0, n_samples_keep + n_samples_len - n_samples_new));
 
-            printf("processing: take = %d, new = %d, old = %d\n", n_samples_take, n_samples_new, (int) pcmf32_old.size());
+            //printf("processing: take = %d, new = %d, old = %d\n", n_samples_take, n_samples_new, (int) pcmf32_old.size());
 
             pcmf32.resize(n_samples_new + n_samples_take);
 
@@ -306,7 +306,7 @@ int main(int argc, char ** argv) {
             wparams.prompt_tokens    = params.no_context ? nullptr : prompt_tokens.data();
             wparams.prompt_n_tokens  = params.no_context ? 0       : prompt_tokens.size();
 
-            printf("processing: pcm size = %d, old = %d\n",(int) pcmf32.size(), (int) pcmf32_old.size());
+            //printf("processing: pcm size = %d, old = %d\n",(int) pcmf32.size(), (int) pcmf32_old.size());
 
             if (whisper_full(ctx, wparams, pcmf32.data(), pcmf32.size()) != 0) {
                 fprintf(stderr, "%s: failed to process audio\n", argv[0]);
@@ -336,7 +336,7 @@ int main(int argc, char ** argv) {
                     const char * text = whisper_full_get_segment_text(ctx, i);
 
                     if (params.no_timestamps) {
-                        printf("%s-------------\n", text);
+                        printf("%s", text);
                         fflush(stdout);
 
                         if (params.fname_out.length() > 0) {

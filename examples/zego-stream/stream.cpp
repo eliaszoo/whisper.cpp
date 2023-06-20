@@ -14,6 +14,7 @@
 #include <vector>
 #include <fstream>
 #include <cstring>
+#include <mutex>
 
 static std::string token_ = "sEub2VayRtw0TXbDS7Ev/WLmC9hx8ay+R62Fiak/I6jHPrJaQs4kv7U5RQVXtZ+VgecNELHvUrH6q+uVF4TV3k8FvTTQgBVar6dXnHWr+pLitO1WLqbQ9f38XgS0Q2MuHLI/+azd8FDkZTPg/Yf3C+rtK4wk5+rujCyM203iowUKqT7Oe/HURcT369NqOvJ3QkmB+vk/Z3gw/9ACfXU0JtcR+Ssehp6K5Y3tp8an+LMIx1ENcF6s5xG9+6KpNS3ectGKr1H1BC4Vi8hJaFiclkG/W4JhXvlB+LAW0WU3w4WjXqmfqV8AFpDuA+J4/sd3+tY1G+DS90BVqbHv8uh2aJlUXxECDDfexSAsNBoRB+Ug2/lxfIW1BfRG58tWV+HL/8H6mBBRNG3A3jYNYJiydk9KwfaYyV0hmoqdjULKv6iGHMiwC/5TVSvKNwqplDM+ep20hEg8MahJjntp/pSAd7OfnPvkkm1VK0XsrtsA9NbboWIMrR50gpP5meqIv9I4";                         // 用于测试的 token
 static int g_play_mode_ = -1;                           // 测试拉流模式，不用修改
@@ -192,7 +193,7 @@ void trans(std::vector<float>& floatVec) {
             printf("\33[2K\r");
 
             const int n_segments = whisper_full_n_segments(ctx);
-            printf("once done segment: %d\n", n_segments);
+            //printf("once done segment: %d\n", n_segments);
             for (int i = 0; i < n_segments; ++i) {
                 const char * text = whisper_full_get_segment_text(ctx, i);
 
@@ -252,12 +253,12 @@ void transInOtherThread() {
         while (true) {
             get(params.step_ms, floatVec);
 
-            if ((int) pcmf32_new.size() > 2*n_samples_step) {
+            if ((int) floatVec.size() > 2*n_samples_step) {
                 fprintf(stderr, "\n\n%s: WARNING: cannot process audio fast enough, dropping audio ...\n\n", __func__);
                 continue;
             }
 
-            if ((int) pcmf32_new.size() >= n_samples_step) {
+            if ((int) floatVec.size() >= n_samples_step) {
                 {
                     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -332,7 +333,7 @@ std::vector<AudioFileInfo> audioFileInfos; //测试存储pcm文件
 FILE* pcm = 0;
 void OnPerAudioData(const char * room_id, const char * stream_id, unsigned char * audio_data, int data_len, int sample_rate, int channels, unsigned long long timestamp, void * user_data)
 {
-    //printf("OnPerAudioData, room id = %s, streamid = %s, len = %d, sample_rate = %d, timstamp = %lld, channel = %d, user data = %s \n", room_id, stream_id, data_len, sample_rate, timestamp, channels, (char*)user_data);
+    printf("OnPerAudioData, room id = %s, streamid = %s, len = %d, sample_rate = %d, timstamp = %lld, channel = %d, user data = %s \n", room_id, stream_id, data_len, sample_rate, timestamp, channels, (char*)user_data);
     /*if (pcm == nullptr) {
         pcm = fopen("test.wav", "wb+");
     } else {
@@ -525,13 +526,14 @@ int main(int argc, char ** argv) {
     zego_api_set_connection_state_update_callback(OnConnectionUpdate, nullptr);
 
     // 开启拉流vad检测,拉流检测到静音数据时不会在通过OnAudioData回调出来
-    zego_api_enable_vad(false); 
+    zego_api_enable_vad(true); 
 
     // 设置 SDK 参数
     zego_sdk_config config;
     config.audio_sample_rate = ZEGO_AUDIO_SAMPLE_RATE_16K;  //设置拉流音频采样率
     zego_api_set_config(config);
     
+    zego_api_set_audio_data_callback(OnAudioData, nullptr);
 
     // 设置获取房间内每条流的音频数据回调
     zego_api_set_per_audio_data_callback(OnPerAudioData, nullptr);
@@ -553,6 +555,8 @@ int main(int argc, char ** argv) {
     zego_api_set_idle_time(idle_time);
 
     zego_api_login_by_token(token_.c_str(), nullptr, OnLogin);
+
+    zego_api_start_get_audio_data("stream1");
 
     audio.resize((16000*params.length_ms)/1000);
     std::thread threadTrans(transInOtherThread);
