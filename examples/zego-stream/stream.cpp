@@ -550,13 +550,17 @@ int main(int argc, char ** argv) {
     playerConfig.is_auto_mix_audio_stream = false;
     zego_api_init_get_data_by_room_id(playerConfig);
 
+    zego_api_init_get_audio_data_by_room_id(g_room_id_.c_str(), g_user_id_.c_str());
+
+    //zego_api_start_get_audio_data("stream1");
+
     // 设置静默时间 20s
     int idle_time = 20000;
     zego_api_set_idle_time(idle_time);
 
     zego_api_login_by_token(token_.c_str(), nullptr, OnLogin);
 
-    zego_api_start_get_audio_data("stream1");
+
 
     audio.resize((16000*params.length_ms)/1000);
     std::thread threadTrans(transInOtherThread);
