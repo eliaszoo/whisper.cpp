@@ -320,6 +320,11 @@ void trans(unsigned char * audio_data, int data_len) {
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
+        if (audio_pos + n_samples > audio.size()) {
+            audio.resize(audio_pos*2);
+            printf("resize audio to %d\n", (int) audio.size());
+        }
+
         memcpy(&audio[audio_pos], floatArr.data(), n_samples * sizeof(float));
         audio_pos = audio_pos + n_samples;
         audio_len += n_samples;
@@ -345,7 +350,8 @@ void trans(unsigned char * audio_data, int data_len) {
 
 void OnAudioData(const char * stream_id_or_room_id, unsigned char * audio_data, int data_len, int sample_rate, int channels, void * user_data)
 {
-    printf("OnAudioData, stream id = %s, len = %d, user data = %s, sample_rate = %d \n", stream_id_or_room_id, data_len, (char*)user_data, sample_rate);
+    //printf("OnAudioData, stream id = %s, len = %d, user data = %s, sample_rate = %d \n", stream_id_or_room_id, data_len, (char*)user_data, sample_rate);
+    trans(audio_data, data_len);
 }
 
 struct AudioFileInfo
