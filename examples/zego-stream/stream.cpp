@@ -96,9 +96,9 @@ bool get(int ms, std::vector<float>& result) {
         std::lock_guard<std::mutex> lock(m_mutex);
 
         size_t n_samples = (16000 * ms) / 1000;
-        size_t s0 = audio.size();
-        if (s0 >= n_samples_step) {
-            memcpy(result.data(), &audio[0], s0 * sizeof(float));
+
+        if (audio_len >= n_samples_step) {
+            memcpy(result.data(), &audio[0], audio_len * sizeof(float));
 
             audio.clear();
             audio_pos = 0;
@@ -588,8 +588,7 @@ int main(int argc, char ** argv) {
     zego_api_login_by_token(token_.c_str(), nullptr, OnLogin);
 
 
-
-    audio.resize((16000*params.length_ms*));
+    audio.resize((16000*params.length_ms));
     std::thread threadTrans(transInOtherThread);
 
     // whisper init
