@@ -89,13 +89,24 @@ int audio_pos = 0;
 int audio_len = 0;
 std::mutex       m_mutex;
 
-void get(int ms, std::vector<float>& result) {
+bool get(int ms, std::vector<float>& result) {
     result.clear();
 
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
         size_t n_samples = (16000 * ms) / 1000;
+        size_t s0 = audio.size();
+        if (s0 >= n_samples_step) {
+            memcpy(result.data(), &audio[0], s0 * sizeof(float));
+
+            audio.clear();
+            audio_pos = 0;
+            audio_len = 0;
+            return true;
+        }
+
+        /*
         if (n_samples > audio_len) {
             n_samples = audio_len;
         }
@@ -114,8 +125,10 @@ void get(int ms, std::vector<float>& result) {
             memcpy(&result[n0], &audio[0], (n_samples - n0) * sizeof(float));
         } else {
             memcpy(result.data(), &audio[s0], n_samples * sizeof(float));
-        }
+        }*/
     }
+
+    return false;
 }
 
 void trans(std::vector<float>& floatVec) {
@@ -250,7 +263,16 @@ void transInOtherThread() {
     while (true)
     {
         std::vector<float> floatVec;
+        if (get(params.step_ms, floatVec)) {
+            trans(floatVec);
+            break;
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        /*
         while (true) {
+    
             get(params.step_ms, floatVec);
 
             if ((int) floatVec.size() > 2*n_samples_step) {
@@ -271,7 +293,7 @@ void transInOtherThread() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
-        trans(floatVec);
+        trans(floatVec);*/
     }
     
 }
@@ -298,6 +320,11 @@ void trans(unsigned char * audio_data, int data_len) {
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
+        memcpy(&audio[audio_pos], floatArr.data(), n_samples * sizeof(float));
+        audio_pos = audio_pos + n_samples;
+        audio_len += n_samples;
+
+        /*
         if (audio_pos + n_samples > audio.size()) {
             const size_t n0 = audio.size() - audio_pos;
 
@@ -311,7 +338,7 @@ void trans(unsigned char * audio_data, int data_len) {
 
             audio_pos = (audio_pos + n_samples) % audio.size();
             audio_len = std::min(size_t(audio_len + n_samples), audio.size());
-        }
+        }*/
     }
 }
 
@@ -562,7 +589,7 @@ int main(int argc, char ** argv) {
 
 
 
-    audio.resize((16000*params.length_ms)/1000);
+    audio.resize((16000*params.length_ms*));
     std::thread threadTrans(transInOtherThread);
 
     // whisper init
