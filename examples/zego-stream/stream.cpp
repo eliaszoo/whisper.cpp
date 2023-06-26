@@ -98,9 +98,9 @@ bool get(int ms, std::vector<float>& result) {
         size_t n_samples = (16000 * ms) / 1000;
 
         if (audio_len >= n_samples_step) {
+            result.resize(audio_len);
             memcpy(result.data(), &audio[0], audio_len * sizeof(float));
 
-            audio.clear();
             audio_pos = 0;
             audio_len = 0;
             return true;
@@ -265,7 +265,6 @@ void transInOtherThread() {
         std::vector<float> floatVec;
         if (get(params.step_ms, floatVec)) {
             trans(floatVec);
-            break;
         } else {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
