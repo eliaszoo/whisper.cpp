@@ -24,7 +24,8 @@ using transcribe::AudioData;
 using transcribe::Text;
 using transcribe::Transcriber;
 
-static std::string token_ = "sEub2VayRtw0TXbDS7Ev/WLmC9hx8ay+R62Fiak/I6jHPrJaQs4kv7U5RQVXtZ+VgecNELHvUrH6q+uVF4TV3k8FvTTQgBVar6dXnHWr+pLitO1WLqbQ9f38XgS0Q2MuHLI/+azd8FDkZTPg/Yf3C+rtK4wk5+rujCyM203iowUKqT7Oe/HURcT369NqOvJ3QkmB+vk/Z3gw/9ACfXU0JtcR+Ssehp6K5Y3tp8an+LMIx1ENcF6s5xG9+6KpNS3ectGKr1H1BC4Vi8hJaFiclkG/W4JhXvlB+LAW0WU3w4WjXqmfqV8AFpDuA+J4/sd3+tY1G+DS90BVqbHv8uh2aJlUXxECDDfexSAsNBoRB+Ug2/lxfIW1BfRG58tWV+HL/8H6mBBRNG3A3jYNYJiydk9KwfaYyV0hmoqdjULKv6iGHMiwC/5TVSvKNwqplDM+ep20hEg8MahJjntp/pSAd7OfnPvkkm1VK0XsrtsA9NbboWIMrR50gpP5meqIv9I4";                         // 用于测试的 token
+//static std::string token_ = "sEub2VayRtw0TXbDS7Ev/WLmC9hx8ay+R62Fiak/I6jHPrJaQs4kv7U5RQVXtZ+VgecNELHvUrH6q+uVF4TV3k8FvTTQgBVar6dXnHWr+pLitO1WLqbQ9f38XgS0Q2MuHLI/+azd8FDkZTPg/Yf3C+rtK4wk5+rujCyM203iowUKqT7Oe/HURcT369NqOvJ3QkmB+vk/Z3gw/9ACfXU0JtcR+Ssehp6K5Y3tp8an+LMIx1ENcF6s5xG9+6KpNS3ectGKr1H1BC4Vi8hJaFiclkG/W4JhXvlB+LAW0WU3w4WjXqmfqV8AFpDuA+J4/sd3+tY1G+DS90BVqbHv8uh2aJlUXxECDDfexSAsNBoRB+Ug2/lxfIW1BfRG58tWV+HL/8H6mBBRNG3A3jYNYJiydk9KwfaYyV0hmoqdjULKv6iGHMiwC/5TVSvKNwqplDM+ep20hEg8MahJjntp/pSAd7OfnPvkkm1VK0XsrtsA9NbboWIMrR50gpP5meqIv9I4";                         // 用于测试的 token
+static std::string token_ = "ZJMLarU9zhcgCpLw+J/efbCfD4KSdKRmOumBMw3JJqP4twaNcUjHql7ZHvKLO/tgKysE8xWnApute+ry9h55KcOxLUAUIkZU2MEwE2hesgL90yb/k3ytyfiR6ttguQtHkTX22K3cVB+Xe68zpoK1aDCFb08hAp7vwFgDQvNZOG1zX5V/DfLSlWCTS7TZf7tnU5TPQ9xtRdD7Sys1QQRycj7CPqXZMGsXrPHREA+vtv7mMMZG0VJBTm+mx6HZ4aJSBc/UPaxC2E0fcKwJzzmd3P0SrJXBdRH9OoCgXuiuiz/tk4bbMYEqpNMellJVK6ODbPH0I+fCn+2Udeje9YcVQqa07XVU27WcXnCMOClq5UVrRKewWHOr4ajv8YJ5heDDtgc1rr4nuPvna3TZerUUQgLL6NNUfVNRbTbUrjZivZJxRB3vj2FCFSJi49deFV+wDeIxra7aY5C8lrkG2a2DOkwcm8Hd4ACYnlDla8wialiU8hzdaxPMxIwzKz7VuL44";
 static int g_play_mode_ = -1;                           // 测试拉流模式，不用修改
 static std::string g_user_id_ = "user_1";               // 用户id，必须全局唯一
 static std::string g_room_id_ = "room_1";               // 房间id，适用于以房间为单位拉流场景
@@ -41,30 +42,44 @@ public:
     TranscriberClient(std::shared_ptr<Channel> channel)
         : stub_(Transcriber::NewStub(channel)) {}
 
+    TranscriberClient(){}
+
     std::string Transcribe(unsigned char * audio_data, int data_len) {
         AudioData audioData;
         // 将音频数据读取并填充到audioData中，这里只是简单示例，你需要根据实际情况进行实现
+        int n_samples = data_len/sizeof(int16_t);
+        std::vector<int16_t> intArr(n_samples);
+        memcpy(intArr.data(), audio_data, data_len);
 
-        audioData.set_data(audio_data, data_len);
+        std::vector<float> floatArr(n_samples);
+        for (uint64_t i = 0; i < n_samples; i++) {
+            floatArr[i] = float(intArr[i])/32768.0f;
+            audioData.add_data(floatArr[i]);
+        }
 
         ClientContext context;
-        std::shared_ptr<grpc::ClientReaderWriter<AudioData, Text>> stream(
+        Text text;
+        stub_->Trans(&context, audioData, &text);
+
+        /*std::shared_ptr<grpc::ClientReaderWriter<AudioData, Text>> stream(
             stub_->Trans(&context));
 
         // 发送音频数据
+        stream->Write(audioData);
+        /*
         while (true) {
             // 将音频数据写入到流中，这里只是简单示例，你需要根据实际情况进行实现
             if (!stream->Write(audioData)) {
                 break;
             }
-        }
-        stream->WritesDone();
-        
-        Text text;
-        std::string transcript;
+        }*/
+        //stream->WritesDone();
+
+        //Text text;
+        //std::string transcript;
 
         // 接收转录文本
-        while (stream->Read(&text)) {
+        /*while (stream->Read(&text)) {
             transcript += text.content();
         }
 
@@ -75,7 +90,8 @@ public:
             std::cout << "Transcription RPC failed: " << status.error_message()
                       << std::endl;
             return "";
-        }
+        }*/
+        return "";
     }
 
 private:
@@ -83,12 +99,11 @@ private:
 };
 
 std::string server_address = "localhost:50051";
-TranscriberClient client(grpc::CreateChannel(
-        server_address, grpc::InsecureChannelCredentials()));
+TranscriberClient client;
 
 void OnAudioData(const char * stream_id_or_room_id, unsigned char * audio_data, int data_len, int sample_rate, int channels, void * user_data)
 {
-    //printf("OnAudioData, stream id = %s, len = %d, user data = %s, sample_rate = %d \n", stream_id_or_room_id, data_len, (char*)user_data, sample_rate);
+    printf("OnAudioData, stream id = %s, len = %d, user data = %s, sample_rate = %d \n", stream_id_or_room_id, data_len, (char*)user_data, sample_rate);
     //trans(audio_data, data_len);
 
     client.Transcribe(audio_data, data_len);
@@ -135,7 +150,7 @@ void OnPerAudioData(const char * room_id, const char * stream_id, unsigned char 
         info.audio_file = fopen(info.audio_file_path, "wb+");
         audioFileInfos.push_back(info);
     }
-    
+
 #endif */
 }
 
@@ -155,7 +170,7 @@ void OnVideoData(const char * stream_id, unsigned char * video_data, int data_le
     {
         fwrite(video_data, 1, data_len, video_file);
     }
-#endif 
+#endif
 }
 
 void OnSnapshot(int error_code, const char* snapshot_file, void * user_data)
@@ -205,6 +220,8 @@ void OnRemoteVideoRenderData(const char *room_id, const char * stream_id, unsign
 }
 
 int main(int argc, char ** argv) {
+    client = TranscriberClient(grpc::CreateChannel(
+        server_address, grpc::InsecureChannelCredentials()));
     // init sdk
     // 设置使用测试环境,true-表示使用zego测试环境，false-表示使用zego正式环境
     zego_api_set_use_test_env(false);
@@ -216,13 +233,13 @@ int main(int argc, char ** argv) {
     zego_api_set_connection_state_update_callback(OnConnectionUpdate, nullptr);
 
     // 开启拉流vad检测,拉流检测到静音数据时不会在通过OnAudioData回调出来
-    zego_api_enable_vad(true); 
+    zego_api_enable_vad(true);
 
     // 设置 SDK 参数
     zego_sdk_config config;
     config.audio_sample_rate = ZEGO_AUDIO_SAMPLE_RATE_16K;  //设置拉流音频采样率
     zego_api_set_config(config);
-    
+
     zego_api_set_audio_data_callback(OnAudioData, nullptr);
 
     // 设置获取房间内每条流的音频数据回调

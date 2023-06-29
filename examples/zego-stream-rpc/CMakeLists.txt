@@ -25,6 +25,7 @@ add_custom_command(
 
 # Include generated *.pb.h files
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # hw_grpc_proto
 add_library(hw_grpc_proto
@@ -37,6 +38,8 @@ target_link_libraries(hw_grpc_proto
   ${_GRPC_GRPCPP}
   ${_PROTOBUF_LIBPROTOBUF})
 
+
+link_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_executable(zego-steam-rpc "stream.cpp")
 target_link_libraries(zego-steam-rpc
